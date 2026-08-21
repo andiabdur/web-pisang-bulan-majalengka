@@ -1,0 +1,33 @@
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary & Build Files
+*.tmp
+*.bak
+*.log
+design_b64.txt
+compress_images.py
+
+# Internal Documentation & Memory
+memory/
+
+# Raw Source Assets (Website uses image/optimized/)
+image/*.png
+
+# Dependencies (if any added later)
+node_modules/
+dist/
+build/
