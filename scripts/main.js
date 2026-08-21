@@ -1,7 +1,8 @@
 /**
  * PISANG GORENG BULAN MAJALENGKA — MAIN JAVASCRIPT
  * Interactivity: Live Order Calculator, WhatsApp Order Generator,
- * Store Hours Checker, Reheating Tabs, and Menu Filters.
+ * Store Hours Checker, Reheating Tabs, Menu Filters, Gallery Filter,
+ * and Slim Minimalist Lightbox Preview.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -11,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initOrderCalculator();
   initMobileNav();
   initSmoothScroll();
+  initGalleryFilter();
+  initLightbox();
 });
 
 // 1. Realtime Store Hours Checker (10.00 - 21.00 WIB)
@@ -318,4 +321,122 @@ function initSmoothScroll() {
       }
     });
   });
+}
+
+// 7. Gallery Category Filter
+function initGalleryFilter() {
+  const filterBtns = document.querySelectorAll('.gallery-filter-btn');
+  const galleryItems = document.querySelectorAll('.gallery-item');
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const filter = btn.getAttribute('data-filter');
+
+      galleryItems.forEach(item => {
+        if (filter === 'all' || item.getAttribute('data-category') === filter) {
+          item.style.display = 'block';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  });
+}
+
+// 8. Slim & Minimalist Lightbox Preview
+let lightboxItems = [];
+let currentLightboxIndex = 0;
+
+function initLightbox() {
+  // Collect all previewable images
+  const previewElements = document.querySelectorAll('[data-lightbox-src], .clickable-preview, .gallery-item');
+  lightboxItems = [];
+
+  previewElements.forEach(el => {
+    const src = el.getAttribute('data-lightbox-src') || el.querySelector('img')?.getAttribute('src') || el.getAttribute('src');
+    const title = el.getAttribute('data-lightbox-title') || el.querySelector('img')?.getAttribute('alt') || 'Dokumentasi Pisang Goreng Bulan';
+    
+    if (src && !lightboxItems.some(item => item.src === src)) {
+      const index = lightboxItems.length;
+      lightboxItems.push({ src, title });
+
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        openLightbox(index);
+      });
+    }
+  });
+
+  // Modal event listeners
+  const modal = document.getElementById('lightbox-modal');
+  const closeBtn = document.getElementById('lightbox-close-btn');
+  const prevBtn = document.getElementById('lightbox-prev-btn');
+  const nextBtn = document.getElementById('lightbox-next-btn');
+
+  if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+  if (prevBtn) prevBtn.addEventListener('click', showPrevLightbox);
+  if (nextBtn) nextBtn.addEventListener('click', showNextLightbox);
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal || e.target.classList.contains('lightbox-container') || e.target.classList.contains('lightbox-image-wrap')) {
+        closeLightbox();
+      }
+    });
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!modal || !modal.classList.contains('active')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') showPrevLightbox();
+    if (e.key === 'ArrowRight') showNextLightbox();
+  });
+}
+
+function openLightbox(index) {
+  const modal = document.getElementById('lightbox-modal');
+  if (!modal || !lightboxItems.length) return;
+
+  currentLightboxIndex = (index >= 0 && index < lightboxItems.length) ? index : 0;
+  updateLightboxContent();
+
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const modal = document.getElementById('lightbox-modal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function showPrevLightbox() {
+  if (!lightboxItems.length) return;
+  currentLightboxIndex = (currentLightboxIndex - 1 + lightboxItems.length) % lightboxItems.length;
+  updateLightboxContent();
+}
+
+function showNextLightbox() {
+  if (!lightboxItems.length) return;
+  currentLightboxIndex = (currentLightboxIndex + 1) % lightboxItems.length;
+  updateLightboxContent();
+}
+
+function updateLightboxContent() {
+  const imgElem = document.getElementById('lightbox-img');
+  const captionElem = document.getElementById('lightbox-caption');
+  const counterElem = document.getElementById('lightbox-counter');
+
+  if (!imgElem || !lightboxItems[currentLightboxIndex]) return;
+
+  const item = lightboxItems[currentLightboxIndex];
+  imgElem.src = item.src;
+  imgElem.alt = item.title;
+  if (captionElem) captionElem.textContent = item.title;
+  if (counterElem) counterElem.textContent = `${currentLightboxIndex + 1} / ${lightboxItems.length}`;
 }
