@@ -11,8 +11,9 @@ Dokumen ini mendata seluruh 17 aset foto resmi yang telah disortir, dianalisis i
 
 | No | Nama File Baru | Kategori | Deskripsi Visual & Peruntukan di Web |
 | :--- | :--- | :--- | :--- |
-| **1** | `hero-unboxing-pisang-goreng-hand.jpg` | **Hero & Appetite Appeal** | Tangan mengangkat pisang goreng renyah dari box kemasan dengan cocolan sambal kecap (*Sangat cocok untuk Hero Section!*). |
-| **2** | `packaging-box-oleh-oleh-stack.jpg` | **Hero & Packaging** | Tumpukan 3 kotak kemasan merah marun ikonik *"PISANG GORENG BULAN"* di atas meja marmer. |
+| **1** | `logo.png` | **Identitas Brand & Header** | Logo resmi vintage badge *"PISANG GORENG BULAN"* dengan garis ganda lengkung (tersedia juga versi favicon 32px, 64px, 180px). |
+| **2** | `hero-unboxing-pisang-goreng-hand.jpg` | **Hero & Appetite Appeal** | Tangan mengangkat pisang goreng renyah dari box kemasan dengan cocolan sambal kecap (*Sangat cocok untuk Hero Section!*). |
+| **3** | `packaging-box-oleh-oleh-stack.jpg` | **Hero & Packaging** | Tumpukan 3 kotak kemasan merah marun ikonik *"PISANG GORENG BULAN"* di atas meja marmer. |
 | **3** | `storefront-kedai-pisang-bulan.jpg` | **Outlet & Lokasi** | Fasad kedai vintage Pisang Goreng Bulan bergaya kolonial klasik dengan Vespa biru antik (*Cocok untuk Section Tentang Kami / Lokasi*). |
 | **4** | `showcase-display-pisang-goreng.jpg` | **Showcase Etalase** | Etalase display pisang goreng krispi di atas nampan kayu daun pisang di bawah lampu hangat. |
 | **5** | `team-crew-kedai-pelayanan.jpg` | **Tim & Layanan** | Tiga kru wanita berseragam celemek Pisang Goreng Bulan memegang nampan pisang hangat (*Membangun trust pelanggan*). |

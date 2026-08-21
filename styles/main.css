@@ -140,6 +140,32 @@ p {
   gap: 0.75rem;
 }
 
+.header-logo-img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.header-logo-img:hover {
+  transform: scale(1.04);
+}
+
+@media (max-width: 640px) {
+  .header-logo-img {
+    height: 40px;
+  }
+}
+
+.footer-logo-img {
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
 .logo-badge-frame {
   display: inline-flex;
   flex-direction: column;
