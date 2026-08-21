@@ -245,16 +245,38 @@ function sendOrderToWhatsApp() {
   const custNotes = document.getElementById('cust-notes')?.value.trim() || 'Diambil di Kedai';
 
   let totalPrice = 0;
-  let itemsText = '';
+  let totalItemsCount = 0;
+  let itemsListText = '';
 
   itemKeys.forEach((key, index) => {
     const item = cart[key];
     const subtotal = item.price * item.qty;
     totalPrice += subtotal;
-    itemsText += `${index + 1}. *${item.name}* x ${item.qty} = ${formatIDR(subtotal)}\n`;
+    totalItemsCount += item.qty;
+
+    itemsListText += `${index + 1}. *${item.name}*\n   ${item.qty}x @ ${formatIDR(item.price)} = *${formatIDR(subtotal)}*\n`;
   });
 
-  const message = `Halo Pisang Goreng Bulan Majalengka,\n\nSaya ingin memesan menu berikut:\n\n${itemsText}\n*Total Pembayaran:* ${formatIDR(totalPrice)}\n\n*Nama Pemesan:* ${custName}\n*Catatan / Pengambilan:* ${custNotes}\n\nMohon konfirmasi ketersediaan dan estimasi pesanannya. Terima kasih.`;
+  const divider = '──────────────────────────';
+
+  const message = [
+    '*PESANAN BARU — PISANG GORENG BULAN*',
+    divider,
+    '*Data Pemesan:*',
+    `• Nama: *${custName}*`,
+    `• Opsi / Catatan: _${custNotes}_`,
+    '',
+    '*Rincian Menu:*',
+    itemsListText.trim(),
+    divider,
+    `*TOTAL ESTIMASI (${totalItemsCount} item): ${formatIDR(totalPrice)}*`,
+    divider,
+    '',
+    '*Outlet Tujuan:*',
+    'Seberang Lapangan GGM, Jl. KH. Abdul Halim, Majalengka',
+    '',
+    '_Mohon konfirmasi ketersediaan pesanan dan instruksi pembayaran (QRIS/Transfer/Tunai). Terima kasih._'
+  ].join('\n');
 
   const phone = '6282118467453';
   const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
