@@ -341,27 +341,128 @@ function initSmoothScroll() {
   });
 }
 
-// 7. Gallery Category Filter
+// 7. Gallery Category Filter & Dynamic Pagination
+let galleryCurrentPage = 1;
+const GALLERY_ITEMS_PER_PAGE = 8;
+let galleryActiveFilter = 'all';
+
 function initGalleryFilter() {
   const filterBtns = document.querySelectorAll('.gallery-filter-btn');
-  const galleryItems = document.querySelectorAll('.gallery-item');
 
   filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       filterBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
-      const filter = btn.getAttribute('data-filter');
-
-      galleryItems.forEach(item => {
-        if (filter === 'all' || item.getAttribute('data-category') === filter) {
-          item.style.display = 'block';
-        } else {
-          item.style.display = 'none';
-        }
-      });
+      galleryActiveFilter = btn.getAttribute('data-filter') || 'all';
+      galleryCurrentPage = 1; // Reset to page 1 on filter switch
+      renderGalleryPagination();
     });
   });
+
+  renderGalleryPagination();
+}
+
+function renderGalleryPagination() {
+  const allGalleryItems = Array.from(document.querySelectorAll('#galeri-foto .gallery-item'));
+  const paginationBar = document.getElementById('gallery-pagination-bar');
+  const paginationInfo = document.getElementById('gallery-page-info');
+
+  // Filter items based on active category
+  const visibleItems = allGalleryItems.filter(item => {
+    const itemCat = item.getAttribute('data-category');
+    return galleryActiveFilter === 'all' || itemCat === galleryActiveFilter;
+  });
+
+  const totalItems = visibleItems.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / GALLERY_ITEMS_PER_PAGE));
+
+  // Ensure current page is valid
+  if (galleryCurrentPage > totalPages) galleryCurrentPage = totalPages;
+  if (galleryCurrentPage < 1) galleryCurrentPage = 1;
+
+  const startIndex = (galleryCurrentPage - 1) * GALLERY_ITEMS_PER_PAGE;
+  const endIndex = startIndex + GALLERY_ITEMS_PER_PAGE;
+
+  // Show/hide gallery items
+  allGalleryItems.forEach(item => {
+    const isMatchingCategory = galleryActiveFilter === 'all' || item.getAttribute('data-category') === galleryActiveFilter;
+    const itemIndexInFiltered = visibleItems.indexOf(item);
+    
+    if (isMatchingCategory && itemIndexInFiltered >= startIndex && itemIndexInFiltered < endIndex) {
+      item.style.display = 'block';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+
+  // Render pagination controls
+  if (paginationBar) {
+    paginationBar.innerHTML = '';
+
+    if (totalPages > 1) {
+      // Prev Button
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'gallery-page-btn';
+      prevBtn.innerHTML = '&larr;';
+      prevBtn.disabled = galleryCurrentPage === 1;
+      prevBtn.setAttribute('aria-label', 'Halaman Sebelumnya');
+      prevBtn.addEventListener('click', () => {
+        if (galleryCurrentPage > 1) {
+          galleryCurrentPage--;
+          renderGalleryPagination();
+          scrollToGallery();
+        }
+      });
+      paginationBar.appendChild(prevBtn);
+
+      // Numbered Page Buttons
+      for (let p = 1; p <= totalPages; p++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `gallery-page-btn ${p === galleryCurrentPage ? 'active' : ''}`;
+        pageBtn.textContent = p;
+        pageBtn.setAttribute('aria-label', `Halaman ${p}`);
+        pageBtn.addEventListener('click', () => {
+          galleryCurrentPage = p;
+          renderGalleryPagination();
+          scrollToGallery();
+        });
+        paginationBar.appendChild(pageBtn);
+      }
+
+      // Next Button
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'gallery-page-btn';
+      nextBtn.innerHTML = '&rarr;';
+      nextBtn.disabled = galleryCurrentPage === totalPages;
+      nextBtn.setAttribute('aria-label', 'Halaman Selanjutnya');
+      nextBtn.addEventListener('click', () => {
+        if (galleryCurrentPage < totalPages) {
+          galleryCurrentPage++;
+          renderGalleryPagination();
+          scrollToGallery();
+        }
+      });
+      paginationBar.appendChild(nextBtn);
+    }
+  }
+
+  // Update info text
+  if (paginationInfo) {
+    if (totalItems === 0) {
+      paginationInfo.textContent = 'Tidak ada foto pada kategori ini.';
+    } else {
+      const shownEnd = Math.min(endIndex, totalItems);
+      paginationInfo.textContent = `Menampilkan ${startIndex + 1}–${shownEnd} dari ${totalItems} foto dokumentasi`;
+    }
+  }
+}
+
+function scrollToGallery() {
+  const galElem = document.getElementById('galeri-foto');
+  if (galElem) {
+    galElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 // 8. Single Image Preview & Gallery Carousel Lightbox with Interactive Zoom & Pan
