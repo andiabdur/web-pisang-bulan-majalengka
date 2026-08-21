@@ -1,8 +1,8 @@
 /**
  * PISANG GORENG BULAN MAJALENGKA — MAIN JAVASCRIPT
- * Interactivity: Live Order Calculator, WhatsApp Order Generator,
- * Store Hours Checker, Reheating Tabs, Menu Filters, Gallery Filter,
- * and Slim Minimalist Lightbox Preview.
+ * Interactivity: Realtime Store Hours Checker, Menu Filters, Reheating Tabs,
+ * Live Order Calculator & WhatsApp Generator, Gallery Filter,
+ * Single Image Preview & Gallery Carousel Lightbox with Interactive Zoom & Pan.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,27 +16,45 @@ document.addEventListener('DOMContentLoaded', () => {
   initLightbox();
 });
 
-// 1. Realtime Store Hours Checker (10.00 - 21.00 WIB)
+// 1. Realtime Store Hours Checker (Sesuai Papan Resmi Kedai)
+// Weekday: 10.00 - 18.00 WIB | Jum'at: 13.00 - 18.00 WIB (Setelah Jum'atan) | Weekend: 08.00 - 18.00 WIB
 function initStoreStatus() {
   const statusBadges = document.querySelectorAll('.store-status-badge');
   if (!statusBadges.length) return;
 
   const now = new Date();
-  // Get current hour in UTC+7 (WIB)
+  // Get current hour and minute in UTC+7 (WIB)
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
   const wibTime = new Date(utc + (3600000 * 7));
+  const currentDay = wibTime.getDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
   const currentHour = wibTime.getHours();
   const currentMinute = wibTime.getMinutes();
+  const currentTimeVal = currentHour + (currentMinute / 60);
 
-  const isOpen = currentHour >= 10 && (currentHour < 21 || (currentHour === 21 && currentMinute === 0));
+  let isOpen = false;
+  let scheduleText = '';
+
+  if (currentDay === 0 || currentDay === 6) {
+    // Weekend (Sabtu & Minggu): 08.00 - 18.00
+    isOpen = currentTimeVal >= 8.0 && currentTimeVal < 18.0;
+    scheduleText = '08.00 – 18.00 WIB (Weekend)';
+  } else if (currentDay === 5) {
+    // Jum'at: Buka Setelah Jum'atan (13.00 - 18.00)
+    isOpen = currentTimeVal >= 13.0 && currentTimeVal < 18.0;
+    scheduleText = '13.00 – 18.00 WIB (Setelah Jum\'atan)';
+  } else {
+    // Weekday (Senin - Kamis): 10.00 - 18.00
+    isOpen = currentTimeVal >= 10.0 && currentTimeVal < 18.0;
+    scheduleText = '10.00 – 18.00 WIB (Weekday)';
+  }
 
   statusBadges.forEach(badge => {
     if (isOpen) {
       badge.className = 'store-status-badge open';
-      badge.innerHTML = '<span class="status-dot"></span> BUKA SEKARANG (10.00 – 21.00 WIB)';
+      badge.innerHTML = `<span class="status-dot"></span> BUKA SEKARANG (Tutup 18.00 WIB)`;
     } else {
       badge.className = 'store-status-badge closed';
-      badge.innerHTML = '<span class="status-dot"></span> TUTUP (Buka Kembali Pukul 10.00 WIB)';
+      badge.innerHTML = `<span class="status-dot"></span> TUTUP (Jam Buka: ${scheduleText})`;
     }
   });
 }
@@ -346,26 +364,42 @@ function initGalleryFilter() {
   });
 }
 
-// 8. Slim & Minimalist Lightbox Preview
-let lightboxItems = [];
-let currentLightboxIndex = 0;
+// 8. Single Image Preview & Gallery Carousel Lightbox with Interactive Zoom & Pan
+let galleryCarouselItems = [];
+let currentGalleryIndex = 0;
+let isGalleryMode = false;
+
+let zoomScale = 1;
+let panX = 0;
+let panY = 0;
+let isDragging = false;
+let startX = 0;
+let startY = 0;
 
 function initLightbox() {
-  // Collect all previewable images
-  const previewElements = document.querySelectorAll('[data-lightbox-src], .clickable-preview, .gallery-item');
-  lightboxItems = [];
+  // 1. Collect Gallery Carousel Items (Only from #galeri-foto)
+  const galleryElems = document.querySelectorAll('#galeri-foto .gallery-item');
+  galleryCarouselItems = [];
 
-  previewElements.forEach(el => {
-    const src = el.getAttribute('data-lightbox-src') || el.querySelector('img')?.getAttribute('src') || el.getAttribute('src');
-    const title = el.getAttribute('data-lightbox-title') || el.querySelector('img')?.getAttribute('alt') || 'Dokumentasi Pisang Goreng Bulan';
-    
-    if (src && !lightboxItems.some(item => item.src === src)) {
-      const index = lightboxItems.length;
-      lightboxItems.push({ src, title });
-
+  galleryElems.forEach((el, index) => {
+    const src = el.getAttribute('data-lightbox-src') || el.querySelector('img')?.getAttribute('src');
+    if (src) {
+      galleryCarouselItems.push(src);
       el.addEventListener('click', (e) => {
         e.preventDefault();
-        openLightbox(index);
+        openGalleryCarousel(index);
+      });
+    }
+  });
+
+  // 2. Attach Single Image Preview to All Other Narrative / Content Images
+  const singlePreviewElems = document.querySelectorAll('.clickable-preview:not(#galeri-foto .gallery-item)');
+  singlePreviewElems.forEach(el => {
+    const src = el.getAttribute('data-lightbox-src') || el.querySelector('img')?.getAttribute('src') || el.getAttribute('src');
+    if (src) {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        openSinglePreview(src);
       });
     }
   });
@@ -376,15 +410,85 @@ function initLightbox() {
   const prevBtn = document.getElementById('lightbox-prev-btn');
   const nextBtn = document.getElementById('lightbox-next-btn');
 
+  // Zoom buttons
+  const zoomInBtn = document.getElementById('lightbox-zoom-in');
+  const zoomOutBtn = document.getElementById('lightbox-zoom-out');
+  const zoomResetBtn = document.getElementById('lightbox-zoom-reset');
+
   if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
-  if (prevBtn) prevBtn.addEventListener('click', showPrevLightbox);
-  if (nextBtn) nextBtn.addEventListener('click', showNextLightbox);
+  if (prevBtn) prevBtn.addEventListener('click', showPrevGalleryImage);
+  if (nextBtn) nextBtn.addEventListener('click', showNextGalleryImage);
+
+  if (zoomInBtn) zoomInBtn.addEventListener('click', () => changeZoom(0.35));
+  if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => changeZoom(-0.35));
+  if (zoomResetBtn) zoomResetBtn.addEventListener('click', resetZoom);
+
+  const imgWrap = document.querySelector('.lightbox-image-wrap');
+  const imgElem = document.getElementById('lightbox-img');
 
   if (modal) {
     modal.addEventListener('click', (e) => {
-      if (e.target === modal || e.target.classList.contains('lightbox-container') || e.target.classList.contains('lightbox-image-wrap')) {
+      if (e.target === modal || e.target.classList.contains('lightbox-container')) {
         closeLightbox();
       }
+    });
+  }
+
+  // Interactive Double Click Zoom Toggle
+  if (imgElem) {
+    imgElem.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      if (zoomScale > 1) {
+        resetZoom();
+      } else {
+        setZoom(2.2);
+      }
+    });
+
+    // Mouse Wheel Zoom
+    imgElem.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.25 : -0.25;
+      changeZoom(delta);
+    }, { passive: false });
+
+    // Drag / Pan when zoomed in
+    imgElem.addEventListener('mousedown', (e) => {
+      if (zoomScale <= 1) return;
+      isDragging = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+      if (imgWrap) imgWrap.classList.add('is-zoomed');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging || zoomScale <= 1) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      applyTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Touch Support for Pan
+    imgElem.addEventListener('touchstart', (e) => {
+      if (zoomScale <= 1 || e.touches.length !== 1) return;
+      isDragging = true;
+      startX = e.touches[0].clientX - panX;
+      startY = e.touches[0].clientY - panY;
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!isDragging || zoomScale <= 1 || e.touches.length !== 1) return;
+      panX = e.touches[0].clientX - startX;
+      panY = e.touches[0].clientY - startY;
+      applyTransform();
+    });
+
+    window.addEventListener('touchend', () => {
+      isDragging = false;
     });
   }
 
@@ -392,17 +496,47 @@ function initLightbox() {
   document.addEventListener('keydown', (e) => {
     if (!modal || !modal.classList.contains('active')) return;
     if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowLeft') showPrevLightbox();
-    if (e.key === 'ArrowRight') showNextLightbox();
+    if (isGalleryMode) {
+      if (e.key === 'ArrowLeft') showPrevGalleryImage();
+      if (e.key === 'ArrowRight') showNextGalleryImage();
+    }
+    if (e.key === '+' || e.key === '=') changeZoom(0.35);
+    if (e.key === '-' || e.key === '_') changeZoom(-0.35);
+    if (e.key === '0') resetZoom();
   });
 }
 
-function openLightbox(index) {
-  const modal = document.getElementById('lightbox-modal');
-  if (!modal || !lightboxItems.length) return;
+function openSinglePreview(src) {
+  isGalleryMode = false;
+  setupLightboxUI(src);
+}
 
-  currentLightboxIndex = (index >= 0 && index < lightboxItems.length) ? index : 0;
-  updateLightboxContent();
+function openGalleryCarousel(index) {
+  isGalleryMode = true;
+  currentGalleryIndex = (index >= 0 && index < galleryCarouselItems.length) ? index : 0;
+  const src = galleryCarouselItems[currentGalleryIndex];
+  setupLightboxUI(src);
+}
+
+function setupLightboxUI(src) {
+  const modal = document.getElementById('lightbox-modal');
+  const imgElem = document.getElementById('lightbox-img');
+  const prevBtn = document.getElementById('lightbox-prev-btn');
+  const nextBtn = document.getElementById('lightbox-next-btn');
+
+  if (!modal || !imgElem) return;
+
+  resetZoom();
+  imgElem.src = src;
+
+  // Toggle navigation buttons based on mode
+  if (isGalleryMode && galleryCarouselItems.length > 1) {
+    if (prevBtn) prevBtn.style.display = 'flex';
+    if (nextBtn) nextBtn.style.display = 'flex';
+  } else {
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+  }
 
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -413,30 +547,62 @@ function closeLightbox() {
   if (!modal) return;
   modal.classList.remove('active');
   document.body.style.overflow = '';
+  resetZoom();
 }
 
-function showPrevLightbox() {
-  if (!lightboxItems.length) return;
-  currentLightboxIndex = (currentLightboxIndex - 1 + lightboxItems.length) % lightboxItems.length;
-  updateLightboxContent();
-}
-
-function showNextLightbox() {
-  if (!lightboxItems.length) return;
-  currentLightboxIndex = (currentLightboxIndex + 1) % lightboxItems.length;
-  updateLightboxContent();
-}
-
-function updateLightboxContent() {
+function showPrevGalleryImage() {
+  if (!isGalleryMode || !galleryCarouselItems.length) return;
+  currentGalleryIndex = (currentGalleryIndex - 1 + galleryCarouselItems.length) % galleryCarouselItems.length;
+  resetZoom();
   const imgElem = document.getElementById('lightbox-img');
-  const captionElem = document.getElementById('lightbox-caption');
-  const counterElem = document.getElementById('lightbox-counter');
+  if (imgElem) imgElem.src = galleryCarouselItems[currentGalleryIndex];
+}
 
-  if (!imgElem || !lightboxItems[currentLightboxIndex]) return;
+function showNextGalleryImage() {
+  if (!isGalleryMode || !galleryCarouselItems.length) return;
+  currentGalleryIndex = (currentGalleryIndex + 1) % galleryCarouselItems.length;
+  resetZoom();
+  const imgElem = document.getElementById('lightbox-img');
+  if (imgElem) imgElem.src = galleryCarouselItems[currentGalleryIndex];
+}
 
-  const item = lightboxItems[currentLightboxIndex];
-  imgElem.src = item.src;
-  imgElem.alt = item.title;
-  if (captionElem) captionElem.textContent = item.title;
-  if (counterElem) counterElem.textContent = `${currentLightboxIndex + 1} / ${lightboxItems.length}`;
+// Zoom & Pan Functions
+function setZoom(val) {
+  zoomScale = Math.min(Math.max(val, 1), 3.5);
+  if (zoomScale === 1) {
+    panX = 0;
+    panY = 0;
+  }
+  applyTransform();
+}
+
+function changeZoom(delta) {
+  setZoom(zoomScale + delta);
+}
+
+function resetZoom() {
+  zoomScale = 1;
+  panX = 0;
+  panY = 0;
+  applyTransform();
+}
+
+function applyTransform() {
+  const imgElem = document.getElementById('lightbox-img');
+  const imgWrap = document.querySelector('.lightbox-image-wrap');
+  const zoomLevelElem = document.getElementById('lightbox-zoom-level');
+
+  if (imgElem) {
+    imgElem.style.transform = `scale(${zoomScale}) translate(${panX / zoomScale}px, ${panY / zoomScale}px)`;
+  }
+  if (imgWrap) {
+    if (zoomScale > 1) {
+      imgWrap.classList.add('is-zoomed');
+    } else {
+      imgWrap.classList.remove('is-zoomed');
+    }
+  }
+  if (zoomLevelElem) {
+    zoomLevelElem.textContent = `${Math.round(zoomScale * 100)}%`;
+  }
 }
